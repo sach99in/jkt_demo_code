@@ -71,7 +71,7 @@ model = BERT_Arch(bert)
 
 # load weights of best model
 path = 'saved_weights.pt'
-model.load_state_dict(torch.load(path, map_location=device))
+model.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
 print("weights loaded")
 
 app = FastAPI()
