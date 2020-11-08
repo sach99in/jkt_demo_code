@@ -1,11 +1,11 @@
 <h1>Read me file</h1>
 <h2>Code Description</h2>
 <ul>
-<li>
-<ul>```agrrement_poc ```: that folder contains training data set, notebook with preprocessing and training code</ul>
-<ul>``` fraud_detect ```: that folder contains dataset, EDA/training notebook </ul>
-<ul>```src_api ```: that folder contains the trained artifacts and the source code of the API which will do inference of the model</ul>
-</li></ul>
+
+<li>```agrrement_poc ```: that folder contains training data set, notebook with preprocessing and training code</li>
+<li>``` fraud_detect ```: that folder contains dataset, EDA/training notebook </li>
+<li>```src_api ```: that folder contains the trained artifacts and the source code of the API which will do inference of the model</li>
+</ul>
 <h2>Deployment process</h2>
 <ul>
 <li>Creat an instance </li>
