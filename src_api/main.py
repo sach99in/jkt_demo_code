@@ -15,6 +15,7 @@ import uvicorn
 from docx import Document
 from nltk.tokenize import sent_tokenize
 import joblib
+import  wget
 device = torch.device("cpu")
 
 # import BERT-base pretrained model
@@ -24,7 +25,10 @@ bert = AutoModel.from_pretrained('bert-base-uncased')
 tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
 print("model loaded")
 nlp = spacy.load("en_core_web_md")
+print("downloading weights from S3")
 
+wget.download("https://test-pytorch-model-demo.s3.ap-south-1.amazonaws.com/weights.pt")
+wget.download("https://test-pytorch-model-demo.s3.ap-south-1.amazonaws.com/xb_bst.pkl")
 class BERT_Arch(nn.Module):
 
     def __init__(self, bert):
@@ -70,7 +74,7 @@ class BERT_Arch(nn.Module):
 model = BERT_Arch(bert)
 
 # load weights of best model
-path = 'saved_weights.pt'
+path = 'weights.pt'
 model.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
 print("weights loaded")
 
