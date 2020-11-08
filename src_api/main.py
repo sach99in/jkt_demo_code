@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import pandas as pd
-import bs4
+
 import os
 import transformers
 from transformers import AutoModel, BertTokenizerFast
@@ -85,6 +85,9 @@ async def desc_exe(file: UploadFile = File(...)):
     document = Document("./temp_file.docx")
     dummy_text = ""
     agreement_det_para=""
+    agreement_on = ""
+    agreement_till = ""
+    agreement_amount = ""
     result_res ={}
     for p in document.paragraphs:
         dummy_text +=p.text
@@ -92,31 +95,47 @@ async def desc_exe(file: UploadFile = File(...)):
     for para in document.paragraphs:
         sentences.append(sent_tokenize(para.text))
     for sent in sentences:
-        sent_id = tokenizer.batch_encode_plus(sent, max_length=500, pad_to_max_length=True, truncation=True)
-        check_seq = torch.tensor(sent_id['input_ids'])
-        check_mask = torch.tensor(sent_id['attention_mask'])
-        check_preds = model(check_seq.to(device), check_mask.to(device))
-        check_preds = check_preds.detach().cpu().numpy()
-        check_preds_new = np.argmax(check_preds, axis=1)
-        if check_preds_new[0] == 2:
-            doc = nlp(sent)
-            for ent in doc.ents:
-                if ent.labels_ == "DATE":
-                    result_res["agreement happen on "] = ent
-        if check_preds_new[0] == 3:
-            doc = nlp(sent)
-            for ent in doc.ents:
-                if ent.labels_ == "DATE":
-                    result_res["agreement happen till "] = ent
-        if check_preds_new[0] == 4:
-            doc = nlp(sent)
-            for ent in doc.ents:
-                if ent.labels_ == "MONEY":
-                    result_res["agreement amount "] = ent
-        if check_preds_new[0] == 1:
-            agreement_det_para = agreement_det_para + " "+ sent
+        try:
+            sent_id = tokenizer.batch_encode_plus(sent, max_length=500, pad_to_max_length=True, truncation=True)
+            check_seq = torch.tensor(sent_id['input_ids'])
+            check_mask = torch.tensor(sent_id['attention_mask'])
+            check_preds = model(check_seq.to(device), check_mask.to(device))
+            check_preds = check_preds.detach().cpu().numpy()
+            check_preds_new = np.argmax(check_preds, axis=1)
+
+            sent_text = sent[0]
+            print(sent_text,check_preds_new)
+            if check_preds_new[0] == 2:
+                doc = nlp(sent_text)
+                for ent in doc.ents:
+                    if ent.label_ == "DATE":
+                        agreement_on = agreement_on+ " "+str(ent.text)
+            if check_preds_new[0] == 3:
+                doc = nlp(sent_text)
+                for ent in doc.ents:
+                    if ent.label_ == "DATE":
+                        agreement_till = agreement_till+ " "+str(ent.text)
+            if check_preds_new[0] == 4:
+                doc = nlp(sent_text)
+                for ent in doc.ents:
+                    if ent.label_ == "MONEY":
+                        agreement_amount = agreement_amount+" "+str(ent.text)
+                    else:
+                        result_res["agreement amount "] = " "
+            if check_preds_new[0] == 1:
+                agreement_det_para = agreement_det_para + " "+ sent_text
+        except:
+            pass
+    result_res["agreement happen on "] = agreement_on
+    result_res["agreement happen till "] = agreement_till
+    result_res["agreement amount "] = agreement_amount
     result_res["agreement details"] = agreement_det_para
     os.remove("temp_file.docx")
+    output_csv = pd.read_csv('OUTPUT.csv')
+    output_csv = output_csv.append({"agreement happen on ":agreement_on,"agreement happen till ":agreement_till,
+                                    "agreement amount ": agreement_amount,"agreement details": agreement_det_para},
+                                   ignore_index=True)
+    output_csv.to_csv('OUTPUT.csv', index=False)
     return result_res
 
 
@@ -133,9 +152,8 @@ async def desc_exe(file: UploadFile = File(...)):
         response["output"] = "Fraud case"
     elif result[0] == 0:
         response["output"] = "Not Fraud case"
-
     return response
-
+    os.remove("temp_df_file.pkl")
 
 
 if __name__ == "__main__":
